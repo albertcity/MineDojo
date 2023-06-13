@@ -196,6 +196,7 @@ class TechTreeMeta(ExtraSpawnMetaTaskBase):
         event_level_control: bool = True,
         # ------ misc ------
         sim_name: str = "TechTreeMeta",
+        **kwargs
     ):
         # should provide `tech` or `tech_item`, but not both
         assert (tech is not None or tech_item is not None) and (
@@ -281,6 +282,7 @@ class TechTreeMeta(ExtraSpawnMetaTaskBase):
             initial_weather=initial_weather,
             start_health=start_health,
             start_food=start_food,
+            **kwargs
         )
 
     @property

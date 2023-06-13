@@ -118,6 +118,7 @@ class SurvivalMeta(MetaTaskBase):
         event_level_control: bool = True,
         # ------ misc ------
         sim_name: str = "SurvivalMeta",
+        **kwargs
     ):
         assert (
             target_days > 1
@@ -150,6 +151,7 @@ class SurvivalMeta(MetaTaskBase):
             initial_weather=initial_weather,
             start_health=start_health,
             start_food=start_food,
+            **kwargs
         )
 
     @property

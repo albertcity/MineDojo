@@ -121,6 +121,7 @@ class Playthrough(MetaTaskBase):
         # ------ misc ------
         break_speed_multiplier: float = 1.0,
         sim_name: str = "Playthrough",
+        **kwargs
     ):
         success_criteria = [simple_inventory_based_check(name="dragon_egg", quantity=1)]
         reward_fns = [
@@ -157,6 +158,7 @@ class Playthrough(MetaTaskBase):
             allow_time_passage=allow_time_passage,
             start_health=start_health,
             start_food=start_food,
+            **kwargs
         )
 
         self.time_limit = TIME_LIMIT

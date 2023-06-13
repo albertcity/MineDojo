@@ -167,6 +167,7 @@ class CombatMeta(ExtraSpawnMetaTaskBase):
         event_level_control: bool = True,
         # ------ misc ------
         sim_name: str = "CombatMeta",
+        **kwargs
     ):
         if isinstance(target_names, str):
             target_names = [target_names]
@@ -253,6 +254,7 @@ class CombatMeta(ExtraSpawnMetaTaskBase):
             allow_mob_spawn=allow_mob_spawn,
             generate_world_type=generate_world_type,
             specified_biome=specified_biome,
+            **kwargs
         )
 
     @property

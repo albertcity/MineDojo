@@ -1,12 +1,13 @@
 import uuid
 from copy import deepcopy
 from typing import Union, Optional, List, Dict, Tuple, Literal, Any
+import serpent
 
 import cv2
 import gym
 import numpy as np
 from lxml import etree
-
+import Pyro4
 from .mc_meta import mc
 from . import handlers
 from .bridge import BridgeEnv
@@ -156,6 +157,8 @@ class MineDojoSim(gym.Env):
         # ------ misc ------
         sim_name: str = "MineDojoSim",
         raise_error_on_invalid_cmds: bool = False,
+        remote_env = False,
+        remote_url = None,
     ):
         self._sim_name = sim_name
         self._rng = np.random.default_rng(seed)
@@ -379,7 +382,11 @@ class MineDojoSim(gym.Env):
             seed=self.new_seed,
         )
 
-        self._bridge_env = BridgeEnv(is_fault_tolerant=True, seed=self.new_seed)
+        if remote_env:
+            url = remote_url
+            self._bridge_env = Pyro4.Proxy(url)
+        else:
+            self._bridge_env = BridgeEnv(is_fault_tolerant=True, seed=self.new_seed)
 
         self._prev_obs = None
         self._prev_action = None
@@ -415,10 +422,17 @@ class MineDojoSim(gym.Env):
         """
         episode_id = str(uuid.uuid4())
 
-        xml = etree.fromstring(self._sim_spec.to_xml(episode_id))
-        raw_obs = self._bridge_env.reset(episode_id, [xml])[0]
+        # xml = etree.fromstring(self._sim_spec.to_xml(episode_id))
+        xml = self._sim_spec.to_xml(episode_id)
+        # print(episode_id, xml)
+        # print(type(episode_id), type(xml))
+        raw_obs = self._bridge_env.reset(episode_id, [xml])
+        # print(raw_obs)
+        raw_obs = raw_obs[0]
+        # print(raw_obs)
         obs, info = self._process_raw_obs(raw_obs)
         self._prev_obs, self._prev_info = deepcopy(obs), deepcopy(info)
+        # assert False
         return obs
 
     def step(self, action: dict):
@@ -437,7 +451,7 @@ class MineDojoSim(gym.Env):
         self._prev_action = deepcopy(action)
         action_xml = self._action_obj_to_xml(action)
         step_tuple = self._bridge_env.step([action_xml])
-        step_success, raw_obs = step_tuple.step_success, step_tuple.raw_obs
+        step_success, raw_obs = step_tuple#.step_success, step_tuple.raw_obs
         if not step_success:
             # when step failed, return prev obs
             return self._prev_obs, 0, True, self._prev_info
@@ -650,6 +664,7 @@ class MineDojoSim(gym.Env):
         info = deepcopy(raw_obs)
         if "pov" in info:
             info.pop("pov")
+        raw_obs['pov'] = serpent.tobytes(raw_obs['pov'])
         obs_dict = {
             h.to_string(): h.from_hero(raw_obs) for h in self._sim_spec.observables
         }

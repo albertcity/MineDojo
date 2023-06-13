@@ -10,6 +10,7 @@ from typing import Optional, List, NamedTuple, Dict
 import numpy as np
 from lxml import etree
 
+import Pyro4
 from ..mc_instance import InstanceManager, MinecraftInstance
 from ..utils import retry
 
@@ -30,7 +31,8 @@ class StepTuple(NamedTuple):
     step_success: bool
     raw_obs: Optional[Dict[int, dict]]
 
-
+@Pyro4.expose
+@Pyro4.behavior(instance_mode="session")
 class BridgeEnv:
     """
     Bridge MineDojo sim and MineCraft java world.
@@ -64,7 +66,8 @@ class BridgeEnv:
     def is_terminated(self):
         return self._terminated
 
-    def reset(self, episode_uid: str, agent_xmls: List[etree.Element]):
+    def reset(self, episode_uid: str, agent_xmls):
+        agent_xmls = [etree.fromstring(agent_xml) for agent_xml in agent_xmls]
         # seed the manager
         self._seed_instance_manager()
 
@@ -314,3 +317,6 @@ class BridgeEnv:
     @staticmethod
     def _get_token(role: int, ep_uid: str):
         return f"{ep_uid}:{str(role)}:0"
+
+if __name__ == '__main__':
+    Pyro4.Daemon.serveSimple({BridgeEnv: 'MinedojoBridgeEnv'}, host='10.200.2.12', port=10086, ns=False)
